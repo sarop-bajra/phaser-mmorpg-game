@@ -8,6 +8,7 @@ class GameScene extends Phaser.Scene {
   init() {
     // launch instead of start, makes phaser open up scenes parallel to the existing scene
     this.scene.launch('Ui');
+    this.score = 0;
   }
 
   create() {
@@ -34,9 +35,35 @@ class GameScene extends Phaser.Scene {
   } // createPlayer
 
   createChests() {
-    // select sprite from spritesheet
-    this.chest = new Chest(this, 300, 300, 'items', 0);
+    // create a chest group
+    this.chests = this.physics.add.group();
+    // create chest position array
+    this.chestPositions = [[100, 100], [200, 200], [300, 300], [400, 400], [500, 500],]
+    // specify the max number of chest we can have
+    this.maxNumberOfChests = 3;
+
+    // spawn a chest
+    for (let i = 0; i < this.maxNumberOfChests; i++) {
+      this.spawnChest();
+    }
+
   } // createChests
+
+  spawnChest() {
+    const location = this.chestPositions[Math.floor(Math.random() * this.chestPositions.length)];
+
+    let chest = this.chests.getFirstDead();
+    if (!chest) {
+      // select sprite from spritesheet
+      const chest = new Chest(this, location[0], location[1], 'items', 0);
+      // add chest to chests group
+      this.chests.add(chest);
+    } else {
+      chest.setPosition(location[0], location[1]);
+      chest.makeActive();
+    }
+
+  }
 
   createWalls() {
     // phaser comes with arcade physics which allows us to move sprites by setting velocity
@@ -55,19 +82,23 @@ class GameScene extends Phaser.Scene {
   addCollisions() {
     this.physics.add.collider(this.player, this.wall);
     // passing this as scope to the method
-    this.physics.add.overlap(this.player, this.chest, this.collectChest, null, this);
+    this.physics.add.overlap(this.player, this.chests, this.collectChest, null, this);
   } // addCollisions
 
   collectChest(player, chest) {
     // play gold pickup sound
     this.goldPickupAudio.play();
-    // when the player overlaps the chest destroy the obj i.e. picked up
-    chest.destroy();
+    // update score
+    this.score += chest.coins;
     // update the score in the ui
     // we can communicate betn scenes in Phaser using the Phaser Scene Events
     // To listen for events, you will need to get a ref to the scene that
     // is emitting the event, and then you can use: events.on()
-    this.events.emit('updateScore', chest.coins);
+    this.events.emit('updateScore', this.score);
+    // make chest game object inactive
+    chest.makeInactive();
+    // spawn a new chest
+    this.time.delayedCall(1000, this.spawnChest, [], this)
   } // collectChest
 
 } // BootScene
