@@ -2,6 +2,12 @@ class GameScene extends Phaser.Scene {
 
   constructor() {
     super('Game');
+  } // constructor
+
+  // init method is initialised before the create method
+  init() {
+    // launch instead of start, makes phaser open up scenes parallel to the existing scene
+    this.scene.launch('Ui');
   }
 
   create() {
@@ -20,24 +26,32 @@ class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(this.player, this.wall);
 
-    const overlap = function (player, chest){
-      goldPickupAudio.play();
-      chest.destroy(); // when the player overlaps the shest the shest is destroyed i.e. picked up
-    }
-
-    this.physics.add.overlap(this.player, this.chest, overlap);
+    // passing this as scope to the method
+    this.physics.add.overlap(this.player, this.chest, this.collectChest, null, this);
 
     // logic to allow our player to move around, by listening to keyboard press
     // cursors listens to the arrow keys
     this.cursors = this.input.keyboard.createCursorKeys();
 
     // by default audio is played only once for multiple we can use loop
-    const goldPickupAudio = this.sound.add('goldSound', { loop: false, volume: 0.5 });
+    this.goldPickupAudio = this.sound.add('goldSound', { loop: false, volume: 0.5 });
 
   } // create
 
   update(){
     this.player.update(this.cursors);
   } // update
+
+  collectChest(player, chest) {
+    // play gold pickup sound
+    this.goldPickupAudio.play();
+    // when the player overlaps the chest destroy the obj i.e. picked up
+    chest.destroy();
+    // update the score in the ui
+    // we can communicate betn scenes in Phaser using the Phaser Scene Events
+    // To listen for events, you will need to get a ref to the scene that
+    // is emitting the event, and then you can use: events.on()
+    this.events.emit('updateScore', chest.coins);
+  }
 
 } // BootScene

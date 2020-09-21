@@ -25,7 +25,7 @@ class BootScene extends Phaser.Scene {
   create() {
     // When done with a scene transition to new scene
     // it also stops the current scene and cleans up the logic in place
-    this.scene.start('Title');
+    this.scene.start('Game');
   }
 
 } // BootScene
