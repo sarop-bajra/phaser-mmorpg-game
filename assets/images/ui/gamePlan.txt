@@ -1,0 +1,9 @@
+Scenes:
+  - Boot: load assets
+  - Title: title, play bytton
+  - Game: main logic
+  - Ui: display current gold count
+
+Classes:
+  - Player: create the player game object, handling the player input
+  - Chest: creating the chest game object, how much gold is in the chest
