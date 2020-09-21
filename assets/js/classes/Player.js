@@ -24,6 +24,10 @@ class Player extends Phaser.Physics.Arcade.Image {
     // add the player to our existing scene
     this.scene.add.existing(this);
 
+    // have the camera follow the player
+    // 'this' here is the player game obj which is needed by startFollow
+    this.scene.cameras.main.startFollow(this);
+
   }
 
   update(cursors) {

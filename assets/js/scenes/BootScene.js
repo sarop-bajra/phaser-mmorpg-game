@@ -11,6 +11,8 @@ class BootScene extends Phaser.Scene {
     this.loadSpriteSheets();
     // load audio
     this.loadAudio();
+    // load tilemap
+    this.loadTileMap();
   } // preload
 
   loadImages() {
@@ -19,6 +21,8 @@ class BootScene extends Phaser.Scene {
     // syntax ('key to identify the image','image url')
     this.load.image('button1', 'assets/images/ui/blue_button01.png');
     this.load.image('button2', 'assets/images/ui/blue_button02.png');
+    // load the map tileset image
+    this.load.image('background', 'assets/level/background-extruded.png');
   } // loadImages
 
   loadSpriteSheets() {
@@ -34,10 +38,15 @@ class BootScene extends Phaser.Scene {
     this.load.audio('goldSound', ['assets/audio/Pickup.wav']);
   } // loadAudio
 
+  loadTileMap() {
+    // map made with Tiled in JSON format
+    this.load.tilemapTiledJSON('map', 'assets/level/large_level.json');
+  } // loadTileMap
+
   create() {
     // When done with a scene transition to new scene
     // it also stops the current scene and cleans up the logic in place
-    this.scene.start('Title');
+    this.scene.start('Game');
   } // create
 
 } // BootScene
