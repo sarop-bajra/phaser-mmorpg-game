@@ -1,6 +1,5 @@
 class UiButton extends Phaser.GameObjects.Container {
   constructor( scene, x, y, key, hoverKey, text, targetCallback) {
-    console.log('test');
     super(scene, x, y);
     this.scene = scene; // the scene this container will be added to
     this.x = x; // the x pos of our container
@@ -19,17 +18,17 @@ class UiButton extends Phaser.GameObjects.Container {
 
   createButton() {
     // create play game button
-    this.button = this.add.image(0, 0, 'button1'); // syntax(xpos, ypos, 'image key')
+    this.button = this.scene.add.image(0, 0, 'button1'); // syntax(xpos, ypos, 'image key')
     // make button interactive
     this.button.setInteractive();
     // scale the button
     this.button.setScale(1.4);
 
     // create the button text
-    this.buttonText = this.add.text(
+    this.buttonText = this.scene.add.text(
       0,
       0,
-      'Play',
+      this.text,
       {fontSize: '26px', fill: '#fff'}
     );
     // center the button text inside the Ui button
@@ -45,15 +44,13 @@ class UiButton extends Phaser.GameObjects.Container {
     });
 
     this.button.on('pointerover', () => {
-
       this.button.setTexture(this.hoverKey);
     });
 
     this.button.on('pointerout', () => {
       this.button.setTexture(this.key);
-
     });
 
   } // createButton
 
-}
+} // UiButton
