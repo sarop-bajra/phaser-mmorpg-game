@@ -7,9 +7,9 @@ class GameManager {
     this.scene = scene;
     this.mapData = mapData;
 
-    //
     this.spawners = {}; // will keep track of existing spawners when generated
     this.chests = {}; // will keep track of existing chests when generated
+    this.monsters = {}; // object for monsters
     // The other three location properties will be used when the spawners are stopped.
     this.playerLocations = [];
     this.chestLocations = {};
@@ -30,7 +30,7 @@ class GameManager {
       // allow us to store all of them into the player_locations array.
       if (layer.name === 'player_locations') {
         layer.objects.forEach((obj) => {
-          this.playerLocations.push( [obj.x, obj.y] );
+          this.playerLocations.push( [obj.x + (obj.width / 2), obj.y - (obj.height / 2)] );
         });
 
       // the'chest_locations' data will be stored to an object rather than an array.
@@ -40,9 +40,9 @@ class GameManager {
         layer.objects.forEach((obj) => {
           var spawner = getTiledProperty(obj, 'spawner');
           if (this.chestLocations[obj.properties.spawner]) {
-            this.chestLocations[obj.properties.spawner].push([obj.x, obj.y]);
+            this.chestLocations[obj.properties.spawner].push([obj.x + (obj.width / 2), obj.y - (obj.height / 2)]);
           } else {
-            this.chestLocations[obj.properties.spawner] = [[obj.x, obj.y]];
+            this.chestLocations[obj.properties.spawner] = [[obj.x + (obj.width / 2), obj.y - (obj.height / 2)]];
           }
         });
 
@@ -50,9 +50,9 @@ class GameManager {
         layer.objects.forEach((obj) => {
           var spawner = getTiledProperty(obj, 'spawner');
           if (this.monsterLocations[obj.properties.spawner]) {
-            this.monsterLocations[obj.properties.spawner].push([obj.x, obj.y]);
+            this.monsterLocations[obj.properties.spawner].push([obj.x + (obj.width / 2), obj.y - (obj.height / 2)]);
           } else {
-            this.monsterLocations[obj.properties.spawner] = [[obj.x, obj.y]];
+            this.monsterLocations[obj.properties.spawner] = [[obj.x + (obj.width / 2), obj.y - (obj.height / 2)]];
           }
         });
       }
@@ -68,10 +68,23 @@ class GameManager {
         // spawner id of the object
         this.spawners[this.chests[chestId].spawnerId].removeObject(chestId);
       }
-    })
+    }); // pickUpChest
+    // received 'destroyEnemy' event from GameScene
+    this.scene.events.on('destroyEnemy', (monsterId) => {
+      // update the spawner
+      if(this.monsters[monsterId]) {
+        this.spawners[this.monsters[monsterId].spawnerId].removeObject(monsterId);
+      }
+    }); // destroyEnemy
   } // setupEventListener
 
   setupSpawners() {
+    const config = {
+      spawnInterval: 3000,
+      limit: 3,
+      spawnerType: SpawnerType.CHEST,
+      id: '',
+    };
     // create chest spawners by looping through all our chest locations
     // Objects.keys method loops through all of the keys in an object.
     // and returns an array of all of the keys in the object.
@@ -127,6 +140,16 @@ class GameManager {
 
   deleteChest(chestId) {
     delete this.chests[chestId];
+  }
+
+  addMonster(monsterId, monster) {
+    this.monsters[monsterId] = monster;
+    // emit an event named monsterSpawned along with the monster object to GameScene, createGameManager
+    this.scene.events.emit('monsterSpawned', monster);
+  }
+
+  deleteMonster(monsterId) {
+    delete this.monsters[monsterId];
   }
 
 } // GameModel

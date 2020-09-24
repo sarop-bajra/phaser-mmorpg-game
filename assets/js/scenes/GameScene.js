@@ -38,6 +38,8 @@ class GameScene extends Phaser.Scene {
   createGroups() {
     // create a chest group
     this.chests = this.physics.add.group();
+    // create a monster group
+    this.monsters = this.physics.add.group();
 
   } // createChests
 
@@ -50,13 +52,13 @@ class GameScene extends Phaser.Scene {
     let chest = this.chests.getFirstDead();
     // if no inactive chest object then create one
     if (!chest) {
-      const chest = new Chest(
+      chest = new Chest(
         this,
         chestObject.x * 2,   // xpos is chestObject.x * 2
         chestObject.y * 2,   // ypos is chestObject.y * 2
         'items',             // select sprite 'items'
          0,  // from spritesheet first element '0'
-         chestObject.gold, 
+         chestObject.gold,
          chestObject.id
        );
       // add chest to chests group
@@ -69,6 +71,31 @@ class GameScene extends Phaser.Scene {
     }
 
   }
+
+  spawnMonster(monsterObject) {
+    let monster = this.monsters.getFirstDead();
+    if (!monster) {
+      monster = new Monster(
+        this,
+        monsterObject.x * 2,
+        monsterObject.y * 2,
+        'monsters',
+        monsterObject.frame,
+        monsterObject.id,
+        monsterObject.health,
+        monsterObject.maxHealth,
+      );
+      // add monster to monsters group
+      this.monsters.add(monster);
+    } else {
+      monster.id = monsterObject.id;
+      monster.health = monsterObject.health;
+      monster.maxHealth = monsterObject.maxHealth;
+      monster.setTexture('monsters', monsterObject.frame);
+      monster.setPosition(monsterObject.x * 2, monsterObject.y * 2);
+      monster.makeActive();
+    }
+  } // spawnMonster
 
   createWalls() {
     // phaser comes with arcade physics which allows us to move sprites by setting velocity
@@ -89,7 +116,16 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.map.blockedLayer);
     // passing this as scope to the method
     this.physics.add.overlap(this.player, this.chests, this.collectChest, null, this);
+    // check for collisions between monster group and the tiled blocked layer from the map class
+    this.physics.add.collider(this.monsters, this.map.blockedLayer);
+    // check for overlaps between the player's weapon and monster game objects
+    this.physics.add.overlap(this.player, this.monsters, this.enemyOverlap, null, this);
   } // addCollisions
+
+  enemyOverlap(player, enemy) {
+    enemy.makeInactive();
+    this.events.emit('destroyEnemy', enemy.id);
+  }
 
   collectChest(player, chest) {
     // play gold pickup sound
@@ -122,6 +158,11 @@ class GameScene extends Phaser.Scene {
     // once received, spawn chest object
     this.events.on('chestSpawned', (chest) => {
       this.spawnChest(chest);
+    });
+
+    // listen to the event to spawn a monster
+    this.events.on('monsterSpawned', (monster) => {
+      this.spawnMonster(monster);
     });
 
     // map.map.objects parameter will include all of the object layers that was created in Tiled

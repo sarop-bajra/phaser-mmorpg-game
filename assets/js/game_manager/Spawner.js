@@ -31,6 +31,8 @@ class Spawner {
   spawnObject() {
     if(this.objectType === SpawnerType.CHEST) {
       this.spawnChest();
+    } else if(this.objectType === SpawnerType.MONSTER) {
+      this.spawnMonster();
     }
   } // spawnObject
 
@@ -44,6 +46,21 @@ class Spawner {
     );
     this.objectsCreated.push(chest);
     this.addObject(chest.id, chest);
+  }
+
+  spawnMonster() {
+    const location = this.pickRandomLocation();
+    const monster = new MonsterModel(
+      location[0], // xpos
+      location[1], // ypos
+      randomNumber(10, 20), // gold
+      this.id, // monster id
+      randomNumber(0, 20), // sprite frame number
+      randomNumber(3, 5),  // health
+      1, // attack
+      );
+    this.objectsCreated.push(monster);
+    this.addObject(monster.id, monster);
   }
 
   pickRandomLocation() {
