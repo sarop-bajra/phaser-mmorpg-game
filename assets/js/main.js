@@ -22,6 +22,11 @@
         },
       },
     },
+    // property in phaser notifying the system of the image type
+    pixelArt: true,
+    // property in phaser to render pixel cleanly by rounding pixel location
+    roundPixels: true,
+    
   }; // config
 
   const game = new Phaser.Game(config);

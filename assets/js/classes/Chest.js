@@ -1,10 +1,10 @@
 class Chest extends Phaser.Physics.Arcade.Image {
 
-  constructor(scene, x, y, key, frame){
+  constructor(scene, x, y, key, frame, coins, id){
     super(scene, x, y, key, frame);
     this.scene = scene; // the scene this game object will be added to
-    this.coins = 10; // the amount of coins this chest contains
-
+    this.coins = coins; // the amount of coins this chest contains
+    this.id = id; // chest id, used for pickup and notifying GameManager to delete it
     //enable physics
     // When you extend the Phaser.Physics.Arcade.Image Class
     // we need to enable Physics on the new Game Object by calling:
