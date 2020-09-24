@@ -8,7 +8,6 @@ class GameScene extends Phaser.Scene {
   init() {
     // launch instead of start, makes phaser open up scenes parallel to the existing scene
     this.scene.launch('Ui');
-    this.score = 0;
   }
 
   create() {
@@ -28,11 +27,25 @@ class GameScene extends Phaser.Scene {
   createAudio() {
     // by default audio is played only once for multiple we can use loop
     this.goldPickupAudio = this.sound.add('goldSound', { loop: false, volume: 0.5 });
+    this.playerAttackAudio = this.sound.add('playerAttack', { loop: false, volume: 0.01 });
+    this.playerDamageAudio = this.sound.add('playerDamage', { loop: false, volume: 0.2 });
+    this.playerDeathAudio = this.sound.add('playerDeath', { loop: false, volume: 0.2 });
+    this.monsterDeathAudio = this.sound.add('enemyDeath', { loop: false, volume: 0.2 });
   } // createAudio
 
-  createPlayer(location) {
+  createPlayer(playerObject) {
     // player selection, through spritesheet
-    this.player = new Player(this, location[0] * 2, location[1] * 2, 'characters', 4);
+    this.player = new PlayerContainer(
+      this,
+      playerObject.x * 2,
+      playerObject.y * 2,
+      'characters',
+      15,
+      playerObject.health,
+      playerObject.maxHealth,
+      playerObject.id,
+      this.playerAttackAudio,
+    );
   } // createPlayer
 
   createGroups() {
@@ -40,6 +53,9 @@ class GameScene extends Phaser.Scene {
     this.chests = this.physics.add.group();
     // create a monster group
     this.monsters = this.physics.add.group();
+    // phaser groups have property called runChildUpdate
+    // which runs update methods that are defined in that class automatically
+    this.monsters.runChildUpdate = true;
 
   } // createChests
 
@@ -77,9 +93,9 @@ class GameScene extends Phaser.Scene {
     if (!monster) {
       monster = new Monster(
         this,
-        monsterObject.x * 2,
-        monsterObject.y * 2,
-        'monsters',
+        monsterObject.x,
+        monsterObject.y,
+        'monsters', // sprite
         monsterObject.frame,
         monsterObject.id,
         monsterObject.health,
@@ -92,7 +108,7 @@ class GameScene extends Phaser.Scene {
       monster.health = monsterObject.health;
       monster.maxHealth = monsterObject.maxHealth;
       monster.setTexture('monsters', monsterObject.frame);
-      monster.setPosition(monsterObject.x * 2, monsterObject.y * 2);
+      monster.setPosition(monsterObject.x, monsterObject.y);
       monster.makeActive();
     }
   } // spawnMonster
@@ -119,28 +135,28 @@ class GameScene extends Phaser.Scene {
     // check for collisions between monster group and the tiled blocked layer from the map class
     this.physics.add.collider(this.monsters, this.map.blockedLayer);
     // check for overlaps between the player's weapon and monster game objects
-    this.physics.add.overlap(this.player, this.monsters, this.enemyOverlap, null, this);
+    this.physics.add.overlap(this.player.weapon, this.monsters, this.enemyOverlap, null, this);
   } // addCollisions
 
-  enemyOverlap(player, enemy) {
-    enemy.makeInactive();
-    this.events.emit('destroyEnemy', enemy.id);
-  }
+  enemyOverlap(weapon, enemy) {
+    // Check if player is attacking and whether a swordHit has occcured
+    if (this.player.playerAttacking && !this.player.swordHit) {
+      this.player.swordHit = true
+
+      this.events.emit('monsterAttacked', enemy.id, this.player.id);
+    }
+  } // enemyOverlap
 
   collectChest(player, chest) {
     // play gold pickup sound
     this.goldPickupAudio.play();
-    // update score
-    this.score += chest.coins;
-    // update the score in the ui
+
     // we can communicate betn scenes in Phaser using the Phaser Scene Events
-    // To listen for events, you will need to get a ref ie 'updateScore' to the scene that
+    // To listen for events, you will need to get a ref ie 'pickUpChest' to the scene that
     // is emitting the event, and then you can use: events.on()
-    this.events.emit('updateScore', this.score);
-    // make chest game object inactive
-    chest.makeInactive();
+
     // emit pickUpChest event to setupEventListner in GameManager
-    this.events.emit('pickUpChest', chest.id)
+    this.events.emit('pickUpChest', chest.id, player.id)
   } // collectChest
 
   createMap() {
@@ -150,8 +166,8 @@ class GameScene extends Phaser.Scene {
 
   createGameManager() {
     // using the data that we got from the Tiled map
-    this.events.on('spawnPlayer', (location) => {
-      this.createPlayer(location);
+    this.events.on('spawnPlayer', (playerObject) => {
+      this.createPlayer(playerObject);
       this.addCollisions();
     });
     // Received emitted event from GameManager,
@@ -165,10 +181,64 @@ class GameScene extends Phaser.Scene {
       this.spawnMonster(monster);
     });
 
+    this.events.on('chestRemoved', (chestId) => {
+      this.chests.getChildren().forEach((chest) => {
+        if (chest.id === chestId) {
+          chest.makeInactive();
+        }
+      });
+    }); // chestRemoved
+
+    // make monster inactive on event monsterRemoved
+    this.events.on('monsterRemoved', (monsterId) => {
+      // getChildren method called on the monsters group will
+      // return an array of child game objects.
+      this.monsters.getChildren().forEach((monster) => {
+      if (monster.id === monsterId) {
+        monster.makeInactive();
+        this.monsterDeathAudio.play();
+      }
+      });
+    }); // monsterRemoved
+
+    this.events.on('updateMonsterHealth', (monsterId, health) => {
+      this.monsters.getChildren().forEach((monster) => {
+        if (monster.id === monsterId) {
+          monster.updateHealth(health);
+        }
+      });
+    });
+
+    this.events.on('monsterMovement', (monsters) => {
+      // to get the children of the monsters game object
+      // loop through all of the monsterId keys
+      this.monsters.getChildren().forEach((monster) => {
+        Object.keys(monsters).forEach((monsterId) => {
+          // if id matches move that monster
+          if(monster.id === monsterId){
+            this.physics.moveToObject(monster, monsters[monsterId], 40); // velocity
+          }
+        });
+      });
+    });
+
+    this.events.on('updatePlayerHealth', (playerId, health) => {
+      //  audio plays when the player's health is decreasing
+      if (health < this.player.health) {
+      this.playerDamageAudio.play();
+      }
+      this.player.updateHealth(health);
+    });
+
+    this.events.on('respawnPlayer', (playerObject) => {
+      this.playerDeathAudio.play();
+      this.player.respawn(playerObject);
+    });
+
     // map.map.objects parameter will include all of the object layers that was created in Tiled
     this.gameManager = new GameManager(this, this.map.map.objects);
     this.gameManager.setup();
 
-  }
+  } // createGameManager
 
 } // BootScene

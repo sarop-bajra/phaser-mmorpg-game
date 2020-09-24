@@ -37,6 +37,10 @@ class BootScene extends Phaser.Scene {
     // the audio assets in an array this way phaser can automatically use the
     // assets that are supported in the players browser.
     this.load.audio('goldSound', ['assets/audio/Pickup.wav']);
+    this.load.audio('enemyDeath', ['assets/audio/EnemyDeath.wav']);
+    this.load.audio('playerAttack', ['assets/audio/PlayerAttack.wav']);
+    this.load.audio('playerDamage', ['assets/audio/PlayerDamage.wav']);
+    this.load.audio('playerDeath', ['assets/audio/PlayerDeath.wav']);
   } // loadAudio
 
   loadTileMap() {
@@ -47,7 +51,7 @@ class BootScene extends Phaser.Scene {
   create() {
     // When done with a scene transition to new scene
     // it also stops the current scene and cleans up the logic in place
-    this.scene.start('Game');
+    this.scene.start('Title');
   } // create
 
 } // BootScene

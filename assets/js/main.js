@@ -2,8 +2,8 @@
 
     const config = {
     type: Phaser.AUTO, // automatically will use webgl
-    width: 800, // canvas width
-    height: 600, // canvas height
+    width: 1000, // canvas width
+    height: 800, // canvas height
     // phaser supports running multiple scenes in parallel
     // by default, a phaser scene is not active when you add that
     // scene to config object, it runs the first scene if not specified
@@ -26,7 +26,7 @@
     pixelArt: true,
     // property in phaser to render pixel cleanly by rounding pixel location
     roundPixels: true,
-    
+
   }; // config
 
   const game = new Phaser.Game(config);

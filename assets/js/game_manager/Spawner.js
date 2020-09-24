@@ -1,7 +1,7 @@
 // Spawner class will be responsible for generating chests or monsters
 // at specific intervals up to a specified limit
 class Spawner {
-  constructor(config, spawnLocations, addObject, deleteObject) {
+  constructor(config, spawnLocations, addObject, deleteObject, moveObjects) {
     this.id = config.id; // unique id for each spawner which is tracked by spawners object in GameManager
     this.spawnInterval = config.spawnInterval;
     this.limit = config.limit;
@@ -12,7 +12,8 @@ class Spawner {
     this.spawnLocations = spawnLocations;
 
     this.addObject = addObject; // tracks number of objects the spawner has created
-    this.deleteObject = deleteObject; //
+    this.deleteObject = deleteObject;
+    this.moveObjects = moveObjects;
 
     this.objectsCreated = [];
 
@@ -26,6 +27,9 @@ class Spawner {
         this.spawnObject();
       }
     }, this.spawnInterval); // runs at defined intervals.
+    if (this.objectType === SpawnerType.MONSTER){
+      this.moveMonsters();
+    }
   } // start
 
   spawnObject() {
@@ -72,19 +76,16 @@ class Spawner {
     const invalidLocation = this.objectsCreated.some((obj) => {
       if(obj.x === location[0] && obj.y === location[1]) {
         return true;
-      } else {
-        return false;
       }
+      return false;
     }); // invalidLocation
     // if randomly picked location is invalid,
     // recursively call pickRandomLocation method until you get a location
     // that is not currently in use.
     // if valid return location object
-    if(invalidLocation){
-      return this.pickRandomLocation();
-    } else {
-      return location;
-    }
+    if(invalidLocation) return this.pickRandomLocation();
+    return location;
+
   } // pickRandomLocation()
 
   removeObject(id) {
@@ -94,6 +95,13 @@ class Spawner {
     this.deleteObject(id);
   }
 
-
-
+  moveMonsters() {
+    // setInterval of 1 second and call the move method on each monster
+    this.moveMonsterInterval = setInterval(() => {
+      this.objectsCreated.forEach((monster) => {
+        monster.move();
+      });
+      this.moveObjects();
+    }, 1000);
+  }
 } // Spawner

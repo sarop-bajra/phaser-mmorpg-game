@@ -4,6 +4,13 @@ const SpawnerType = {
   MONSTER: 'MONSTER',
 };
 
+const Direction = {
+  RIGHT: 'RIGHT',
+  LEFT: 'LEFT',
+  UP: 'UP',
+  DOWN: 'DOWN',
+};
+
 function randomNumber(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
